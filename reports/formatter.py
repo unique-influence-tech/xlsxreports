@@ -1,8 +1,9 @@
 """
-    A factory to generate a dictionary with proper format for each value.
+
+A factory to generate a dictionary with proper format for each value.
 
 Notes:
-    The localize_currency method is not completely thought out for use with the writer. 
+    I'm not entirely sure this is a necessar class.
 
      
 """
@@ -16,7 +17,6 @@ class FormatFactory(dict):
         None
 
     Refs:
-
         (1) Note necessary because of 
             http://xlsxwriter.readthedocs.io/workbook.html#constructor
 
@@ -34,8 +34,8 @@ class FormatFactory(dict):
         'font_size':'11'}
 
     _FOOT_ = {
-        'font_size':'13',
         'bold': True,
+        'font_size':'13',
         'top':1}
 
     def __init__(self, *args, **kwargs):
@@ -55,19 +55,18 @@ class FormatFactory(dict):
 
     @classmethod
     def create(cls, **kwargs):
-        """Create proper formatting."""
-        
+        """Generate a formatting dictionary."""
         value = kwargs.get('value')
         max_len = kwargs.get('max')
-        vertices = kwargs.get('vertices')
 
         if isinstance(value, str):
+            # string logic 
             return cls(font_size='12')
 
         if isinstance(value, int):
+            # integer logic 
             return cls(num_format='#,##0')
 
-        # TO Dos: smart parser for currency and normal floats
         if isinstance(value, float):
             str_ = str(value).rsplit('.')
             currency = cls.localize_currency()

@@ -9,6 +9,7 @@ TO DOs:
     Tons
 """
 import xlsxwriter
+import datetime 
 import pandas
 
 from reports.kursor import Kursor
@@ -48,6 +49,34 @@ class Writer:
         self._formats = {}
         self._cursors = {}
 
+
+    # Sheet write helper methods 
+    def __get_totals(self, obj):
+        """Get max char length for each column.
+        
+        Args:
+            :obj: list, list obj containing list objects 
+        """
+        store = {}
+        obj_ = obj[1:] # exclude header record 
+
+        for record in obj_: 
+            for index in range(len(record)):
+                key = store.get(index)
+                if isinstance(record[index], str):
+                    continue
+                if isinstance(record[index], datetime.date):
+                    continue
+                if key:
+                    store[index].append(record[index])     
+                else:
+                    store.update({index:[record[index]]})
+
+        store = {index : sum(store[index]) for index in store}
+
+        return store
+
+
     def __get_lengths(self, obj):
         """Get max char length for each column.
         
@@ -76,6 +105,7 @@ class Writer:
 
         return store
 
+
     def __get_vertices(self, cursor, obj):
         """ Generate table dimensions based on current
         position in sheet.
@@ -102,7 +132,7 @@ class Writer:
             'start_row': x,
             'start_column': y}
 
-    # necessary methods
+    # Exposed method(s)
     def write(self, sheet, obj):
         """Writes an individual list or pandas.core.DataFrame object to 
         xlsxwriter.Workbook.sheet object.
@@ -142,36 +172,44 @@ class Writer:
             else:
                 raise AttributeError('Kursor object doesn\'t exist.')
 
-        # write data to sheet
+        totals = self.__get_totals(data_)
         lengths = self.__get_lengths(data_)
         vertices = self.__get_vertices(kursor, obj)
+
+        # | ----- Write to sheet ----- |
         kursor.x = vertices['start_row']
         kursor.y = vertices['start_column']
 
+        # | ----- Write header and body ----- |
         for row in range(vertices['rows']):
             kursor.y = vertices['start_column']
             for column in range(vertices['columns']):
-                make_pretty = format_.create(
+                foremat = format_.create(
                     value=data_[row][column],
                     max=lengths[column]['max'])
                 if row == 0:
-                    make_pretty.update(format_._HEAD_)
-                elif row > 0 and row < vertices['rows']:
-                    make_pretty.update(format_._BODY_)
+                    foremat.update(format_._HEAD_)
                 else:
-                    make_pretty.update(format_._FOOT_)
-                make_pretty = file_.add_format(make_pretty)
-                sheet_.write(kursor.x, kursor.y, data_[row][column], make_pretty)
+                    foremat.update(format_._BODY_)
+                foremat = file_.add_format(foremat)
+                sheet_.write(kursor.x, kursor.y, data_[row][column], foremat)
                 kursor.plus_column
             kursor.plus_row
-        kursor.y = vertices['start_column']
+        else:        
+            # | ----- Write summary row and set column width ----- |
+            kursor.y = vertices['start_column']
+            for column in range(kursor.y, kursor.y + vertices['columns']):
+                max_ = lengths[column-kursor.y]['max']
+                min_ = lengths[column-kursor.y]['min']
+                value_ = totals.get(column-kursor.y, '-') 
 
-        # set column lengths to something decent
-        for column in range(kursor.y, kursor.y + vertices['columns']):
-            max_ = lengths[column-kursor.y]['max']
-            min_ = lengths[column-kursor.y]['min']
-            sheet_.set_column(column, column, (max_ + min_)/2)
-
+                foremat = format_.create(value=value_, max=max_)
+                foremat.update(format_._FOOT_)
+                foremat = file_.add_format(foremat)
+                
+                sheet_.write(kursor.x, column, value_, foremat)
+                sheet_.set_column(column, column, (max_ + min_)/2)
+           
         return True
 
     def close(self):
