@@ -11,9 +11,12 @@ TO DOs:
 import xlsxwriter
 import datetime 
 import pandas
+import pprint
+import copy
 
 from reports.kursor import Kursor
 from reports.formatter import FormatFactory
+
 
 class Writer:
     ''' Write pandas.core.frame.DataFrame objects
@@ -49,8 +52,133 @@ class Writer:
         self._formats = {}
         self._cursors = {}
 
+    # Main Methods
+    def write(self, sheet, obj):
+        """Writes an individual list or pandas.core.DataFrame object to 
+        xlsxwriter.Workbook.sheet object.
 
-    # Sheet write helper methods 
+        Args:
+            :sheet: str, name of sheet
+            :obj: list or pandas.core.DataFrame.object, data to be written
+        """
+        file_ = self._workbook
+        format_ = self._formatter
+        data = self.__parse(obj)
+
+        # find sheet or create sheet object
+        if sheet not in file_.sheetnames:
+            file_.add_worksheet(sheet)
+            sheet_ = file_.get_worksheet_by_name(sheet)
+            kursor = self._cursors[sheet] = Kursor(6, 1)
+        else:
+            sheet_ = file_.get_worksheet_by_name(sheet)
+            kursor = self._cursors.get(sheet)
+            if kursor:
+                kursor.next_table
+            else:
+                raise AttributeError('Kursor object doesn\'t exist.')
+
+        vertices = self.__get_vertices(kursor, data)
+        format_map = self.__get_format_map(kursor, data)
+
+        # | ---------- Write to sheet ----------|
+        kursor.x = vertices['start_row']
+        kursor.y = vertices['start_column']
+
+        for row in range(vertices['rows']):
+            kursor.y = vertices['start_column']
+            for column in range(vertices['columns']):
+                if row == 0:
+                    foremat = format_map['HEAD'][column]['format']
+                else:
+                    foremat = format_map['BODY'][column]['format']
+                foremat = file_.add_format(foremat)
+                sheet_.write(kursor.x, kursor.y, data[row][column], foremat)
+                kursor.plus_column
+            kursor.plus_row
+        else:        
+            kursor.y = vertices['start_column']
+            for column in range(kursor.y, kursor.y + vertices['columns']):
+                max_ = format_map['FOOT'][column-kursor.y]['lengths']['max']
+                min_ = format_map['FOOT'][column-kursor.y]['lengths']['min']
+                value_ = format_map['FOOT'][column-kursor.y]['totals']
+                total = value_.get(column-kursor.y, '-')
+                foremat = format_map['FOOT'][column-kursor.y]['format']
+                foremat = file_.add_format(foremat)
+                sheet_.write(kursor.x, column, total, foremat)
+                sheet_.set_column(column, column, (max_ + min_)/2)
+           
+        return True
+
+    def close(self):
+        """Close workbook."""
+        print('Closing workbook.')
+        return self._workbook.close()
+
+    # Internal Methods
+    def __parse(self, obj):
+        """Parse data into list of list."""
+
+        if isinstance(obj, pandas.core.frame.DataFrame):
+            data_ = []
+            data_.extend([obj.columns.values])
+            data_.extend(obj.values)
+        elif isinstance(obj, list):
+            if isinstance(obj[0], dict):
+                data_ = [list(obj[0].keys())]
+                for record in obj:
+                    data_.append(list(record.values()))
+            elif isinstance(obj[0], list):
+                data_ = obj
+        else:
+            raise TypeError("Data is not a DataFrame or list object.")
+
+        return data_
+
+
+    def __get_format_map(self, cursor, obj):
+        """ Create a format map for head, body and footer.
+        
+        Args:
+            :obj: list, list of lists containing data
+            :cursor: kursor.Kursor obj
+            :formatter: formatter.FormatFactory obj
+
+        Refs:
+            None
+        """
+        base = {}
+        lengths = self.__get_lengths(obj)
+        totals = self.__get_totals(obj)
+        format_map = {'HEAD':'', 'BODY':'', 'FOOT':''}
+
+        for index in range(len(obj[1])):
+            formatter = FormatFactory()
+            format_ = formatter.create(
+                value=obj[1][index],
+                max=lengths[index]['max'])
+            base.update({
+                index:{
+                    'format':format_, 
+                    'lengths':lengths[index], 
+                    'totals':totals}
+                })
+
+        for key in format_map:
+            clone = copy.deepcopy(base)
+            format_map[key] = clone
+            for index in range(len(obj[1])):
+                format_ = format_map[key][index]['format']
+                if key == 'HEAD':
+                    format_.update(format_.HEAD)  
+                if key == 'BODY':
+                    format_.update(format_.BODY)  
+                if key == 'FOOT':
+                    format_.update(format_.FOOT)  
+
+        return format_map
+    
+
     def __get_totals(self, obj):
         """Get max char length for each column.
         
@@ -96,12 +224,12 @@ class Writer:
                     store[index].append(len(value))
                 else:
                     store.update({index:[len(value)]})
-
-        for item in store:
-            max_ = max(store[item])
-            # currency float length runs small
-            min_ = min(store[item]) if min(store[item]) > 12 else 12
-            store[item] = {'min': min_, 'max': max_}
+        else:
+            for item in store:
+                max_ = max(store[item])
+                # currency float length runs small
+                min_ = min(store[item]) if min(store[item]) > 15 else 15
+                store[item] = {'min': min_, 'max': max_}
 
         return store
 
@@ -111,6 +239,7 @@ class Writer:
         position in sheet.
 
         Args:
+            :cursor: kursor.Kursor obj
             :obj: pandas dataframe or a list containing objs with
                   obj.__len__ implemented 
         """
@@ -132,92 +261,8 @@ class Writer:
             'start_row': x,
             'start_column': y}
 
-    # Exposed method(s)
-    def write(self, sheet, obj):
-        """Writes an individual list or pandas.core.DataFrame object to 
-        xlsxwriter.Workbook.sheet object.
 
-        Args:
-            :sheet: str, name of sheet
-            :obj: list or pandas.core.DataFrame.object, data to be written
-        """
-        file_ = self._workbook
-        format_ = self._formatter
-
-        # transform data into list of lists
-        if isinstance(obj, pandas.core.frame.DataFrame):
-            data_ = []
-            data_.extend([obj.columns.values])
-            data_.extend(obj.values)
-        elif isinstance(obj, list):
-            if isinstance(obj[0], dict):
-                data_ = [list(obj[0].keys())]
-                for record in obj:
-                    data_.append(list(record.values()))
-            elif isinstance(obj[0], list):
-                data_ = obj
-        else:
-            raise TypeError("Data is not a DataFrame or list object.")
-
-        # find sheet or create sheet object
-        if sheet not in file_.sheetnames:
-            file_.add_worksheet(sheet)
-            sheet_ = file_.get_worksheet_by_name(sheet)
-            kursor = self._cursors[sheet] = Kursor(6, 1)
-        else:
-            sheet_ = file_.get_worksheet_by_name(sheet)
-            kursor = self._cursors.get(sheet)
-            if kursor:
-                kursor.next_table
-            else:
-                raise AttributeError('Kursor object doesn\'t exist.')
-
-        totals = self.__get_totals(data_)
-        lengths = self.__get_lengths(data_)
-        vertices = self.__get_vertices(kursor, obj)
-
-        # | ----- Write to sheet ----- |
-        kursor.x = vertices['start_row']
-        kursor.y = vertices['start_column']
-
-        # | ----- Write header and body ----- |
-        for row in range(vertices['rows']):
-            kursor.y = vertices['start_column']
-            for column in range(vertices['columns']):
-                foremat = format_.create(
-                    value=data_[row][column],
-                    max=lengths[column]['max'])
-                if row == 0:
-                    foremat.update(format_._HEAD_)
-                else:
-                    foremat.update(format_._BODY_)
-                foremat = file_.add_format(foremat)
-                sheet_.write(kursor.x, kursor.y, data_[row][column], foremat)
-                kursor.plus_column
-            kursor.plus_row
-        else:        
-            # | ----- Write summary row and set column width ----- |
-            kursor.y = vertices['start_column']
-            for column in range(kursor.y, kursor.y + vertices['columns']):
-                max_ = lengths[column-kursor.y]['max']
-                min_ = lengths[column-kursor.y]['min']
-                value_ = totals.get(column-kursor.y, '-') 
-
-                foremat = format_.create(value=value_, max=max_)
-                foremat.update(format_._FOOT_)
-                foremat = file_.add_format(foremat)
-                
-                sheet_.write(kursor.x, column, value_, foremat)
-                sheet_.set_column(column, column, (max_ + min_)/2)
-           
-        return True
-
-    def close(self):
-        """Close workbook."""
-        print('Closing workbook.')
-        return self._workbook.close()
-
-    # representations
+    # Representations
     def __repr__(self):
         return '<{name} object at {mem} >'.format(
             name=self.__class__.__name__,
@@ -231,7 +276,7 @@ class Writer:
             tabs=self._workbook.sheetnames
         )
 
-    # attributes
+    # Attributes
     @property
     def cursors(self):
         return getattr(self, '_cursors')
