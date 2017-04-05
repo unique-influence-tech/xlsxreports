@@ -1,13 +1,9 @@
-"""
-The writer is an object that ... well ... er.. writes. More seriously, it writes
-nested structures of data into a table like format in Excel. 
-
-Notes:
-    None
-
-TO DOs:
-    Tons
-"""
+# -*- coding: utf-8 -*-
+'''
+Provides the `<class 'reports.writer.Writer'>` class, a derivative of xlsxwriter that 
+writes nested arrays into tables on multiple tabs keeping track of each position on each
+tab for further editing. 
+'''
 import xlsxwriter
 import datetime 
 import pandas
@@ -16,7 +12,6 @@ import copy
 
 from reports.kursor import Kursor
 from reports.formatter import FormatFactory
-
 
 class Writer:
     ''' Write pandas.core.frame.DataFrame objects
@@ -49,27 +44,25 @@ class Writer:
 
         self._workbook = xlsxwriter.Workbook(file_, self._settings_) 
         self._formatter = FormatFactory(locale=locale)
-        self._formats = {}
         self._cursors = {}
 
-    # Main Methods
+    # User Methods
     def write(self, sheet, obj):
-        """Writes an individual list or pandas.core.DataFrame object to 
+        '''Writes an individual list or pandas.core.DataFrame object to 
         xlsxwriter.Workbook.sheet object.
 
         Args:
             :sheet: str, name of sheet
             :obj: list or pandas.core.DataFrame.object, data to be written
-        """
+        '''
         file_ = self._workbook
         format_ = self._formatter
         data = self.__parse(obj)
 
-        # find sheet or create sheet object
         if sheet not in file_.sheetnames:
             file_.add_worksheet(sheet)
             sheet_ = file_.get_worksheet_by_name(sheet)
-            kursor = self._cursors[sheet] = Kursor(6, 1)
+            kursor = self._cursors[sheet] = Kursor(5, 1)
         else:
             sheet_ = file_.get_worksheet_by_name(sheet)
             kursor = self._cursors.get(sheet)
@@ -81,7 +74,7 @@ class Writer:
         vertices = self.__get_vertices(kursor, data)
         format_map = self.__get_format_map(kursor, data)
 
-        # | ---------- Write to sheet ----------|
+        # |---------- WRITE TO SHEET ----------|
         kursor.x = vertices['start_row']
         kursor.y = vertices['start_column']
 
@@ -90,35 +83,27 @@ class Writer:
             for column in range(vertices['columns']):
                 if row == 0:
                     foremat = format_map['HEAD'][column]['format']
-                else:
+                elif row > 0 and row < vertices['rows']-1:
                     foremat = format_map['BODY'][column]['format']
+                else:
+                    foremat = format_map['FOOT'][column]['format']
                 foremat = file_.add_format(foremat)
                 sheet_.write(kursor.x, kursor.y, data[row][column], foremat)
                 kursor.plus_column
             kursor.plus_row
-        else:        
-            kursor.y = vertices['start_column']
-            for column in range(kursor.y, kursor.y + vertices['columns']):
-                max_ = format_map['FOOT'][column-kursor.y]['lengths']['max']
-                min_ = format_map['FOOT'][column-kursor.y]['lengths']['min']
-                value_ = format_map['FOOT'][column-kursor.y]['totals']
-                total = value_.get(column-kursor.y, '-')
-                foremat = format_map['FOOT'][column-kursor.y]['format']
-                foremat = file_.add_format(foremat)
-                sheet_.write(kursor.x, column, total, foremat)
-                sheet_.set_column(column, column, (max_ + min_)/2)
-           
+
+        kursor.y = vertices['start_column']
+
         return True
 
     def close(self):
-        """Close workbook."""
+        '''Close workbook.'''
         print('Closing workbook.')
         return self._workbook.close()
 
     # Internal Methods
     def __parse(self, obj):
-        """Parse data into list of list."""
-
+        '''Parse data into list of list.'''
         if isinstance(obj, pandas.core.frame.DataFrame):
             data_ = []
             data_.extend([obj.columns.values])
@@ -135,21 +120,17 @@ class Writer:
 
         return data_
 
-
     def __get_format_map(self, cursor, obj):
-        """ Create a format map for head, body and footer.
+        ''' Create a format map for head, body and footer.
         
         Args:
             :obj: list, list of lists containing data
             :cursor: kursor.Kursor obj
             :formatter: formatter.FormatFactory obj
-
-        Refs:
-            None
-        """
+        '''
         base = {}
         lengths = self.__get_lengths(obj)
-        totals = self.__get_totals(obj)
+        #totals = self.__get_totals(obj)
         format_map = {'HEAD':'', 'BODY':'', 'FOOT':''}
 
         for index in range(len(obj[1])):
@@ -160,8 +141,8 @@ class Writer:
             base.update({
                 index:{
                     'format':format_, 
-                    'lengths':lengths[index], 
-                    'totals':totals}
+                    'lengths':lengths[index]
+                    }
                 })
 
         for key in format_map:
@@ -178,39 +159,8 @@ class Writer:
 
         return format_map
     
-
-    def __get_totals(self, obj):
-        """Get max char length for each column.
-        
-        Args:
-            :obj: list, list obj containing list objects 
-        """
-        store = {}
-        obj_ = obj[1:] # exclude header record 
-
-        for record in obj_: 
-            for index in range(len(record)):
-                key = store.get(index)
-                if isinstance(record[index], str):
-                    continue
-                if isinstance(record[index], datetime.date):
-                    continue
-                if key:
-                    store[index].append(record[index])     
-                else:
-                    store.update({index:[record[index]]})
-
-        store = {index : sum(store[index]) for index in store}
-
-        return store
-
-
     def __get_lengths(self, obj):
-        """Get max char length for each column.
-        
-        Args:
-            :obj: list, list obj containing list objects 
-        """
+        '''Get max char length for each column.'''
         store = {}
         obj_ = obj[1:] # exclude header record 
 
@@ -233,16 +183,15 @@ class Writer:
 
         return store
 
-
     def __get_vertices(self, cursor, obj):
-        """ Generate table dimensions based on current
+        ''' Generate table dimensions based on current
         position in sheet.
 
         Args:
             :cursor: kursor.Kursor obj
             :obj: pandas dataframe or a list containing objs with
                   obj.__len__ implemented 
-        """
+        '''
         x, y = cursor.coordinates
 
         if isinstance(obj, pandas.core.frame.DataFrame):
@@ -261,10 +210,9 @@ class Writer:
             'start_row': x,
             'start_column': y}
 
-
     # Representations
     def __repr__(self):
-        return '<{name} object at {mem} >'.format(
+        return '<{name} object at {mem}>'.format(
             name=self.__class__.__name__,
             mem=hex(id(self)),
         )

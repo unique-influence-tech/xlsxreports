@@ -1,9 +1,8 @@
-"""
-A factory to generate a dictionary with proper format for each value.
-
-Notes:
-    I mainly implemented this to get s sense for Factory classes. 
-"""
+# -*- coding: utf-8 -*-
+'''
+Provides the `<class 'reports.formatter.FormatFactory'>` class, a class that generates format
+objects. 
+'''
 import datetime
 
 class FormatFactory(dict):
@@ -23,7 +22,7 @@ class FormatFactory(dict):
     """
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
-        self.HEAD = {'bold': True,'font_size':'13','bottom':1}
+        self.HEAD = {'bold': True,'font_size':'13', 'bottom':1}
         self.BODY = {'font_size':'11'}
         self.FOOT = {'bold': True,'font_size':'13','top':1}
         

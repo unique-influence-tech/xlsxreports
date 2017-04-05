@@ -1,22 +1,11 @@
-"""
-Utilities all around. Utilities on me!
-
-To Dos:
-    None
-
-"""
+# -*- coding: utf-8 -*-
+'''
+Utility functions used in library. 
+'''
 import collections
 import elizabeth
 import random  
 import pandas
-
-def is_tuple_like(obj):
-    """Simple function to keep error checking DRY."""
-    if not isinstance(obj, tuple) or isinstance(obj, Kursor):
-        raise TypeError(
-            'Your trying to make a non-tuple comparison.'
-        )
-    return True
 
 def data(records=50, df=True):
     """Generate random data. This function will produce a pandas.core.Dataframe 
@@ -52,6 +41,27 @@ def data(records=50, df=True):
             
     if isinstance(store, dict):
         store = pandas.DataFrame(store)
+
+    return store
+
+def get_totals(self, obj):
+    '''Get max char length for each column.'''
+    store = {}
+    obj_ = obj[1:] # exclude header record 
+
+    for record in obj_: 
+        for index in range(len(record)):
+            key = store.get(index)
+            if isinstance(record[index], str):
+                continue
+            if isinstance(record[index], datetime.date):
+                continue
+            if key:
+                store[index].append(record[index])     
+            else:
+                store.update({index:[record[index]]})
+
+    store = {index : sum(store[index]) for index in store}
 
     return store
 

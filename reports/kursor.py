@@ -1,6 +1,8 @@
-"""
-Kursor object 
-"""
+# -*- coding: utf-8 -*-
+'''
+Provides the `<class 'reports.kursor.Kursor'>` class, a simple cursor object to keep
+position on each Excel Workbook tab. 
+'''
 import string 
 
 class Kursor:
@@ -11,6 +13,7 @@ class Kursor:
         self.x = x
         self.y = y
 
+    # Internal Methods
     def __get_xlsx_position(self):
         """Return user friendly Excel sheet position."""
         num = 0
@@ -27,7 +30,7 @@ class Kursor:
                 if num == self.y:
                     return string_
 
-    #representations
+    # Representations
     def __str__(self):
         return "<{name} object x={x} y={y}>".format(
             name=self.__class__.__name__,
@@ -43,7 +46,7 @@ class Kursor:
             mem=hex(id(self))
         )
 
-    # properties 
+    # Properties
     @property
     def coordinates(self):
         return (

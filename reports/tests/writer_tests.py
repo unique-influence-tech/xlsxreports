@@ -1,7 +1,5 @@
+# -*- coding: utf-8 -*-
 """
-
-To Dos:
-    Write pytests for the writer object.
 
 """
 import sys 
@@ -9,40 +7,26 @@ import pytest
 import utils
 import writer
 
-def test_write_method():
-    """Tests for the writer.Writer().write()"""
-    list_data_1 = utils.data(50)
-    list_data_2 = utils.data(100)
-    list_data_3 = utils.data(150)
-    
-    dataframe_data_1 = utils.data(50, True)
-    dataframe_data_2 = utils.data(100, True)
-    dataframe_data_3 = utils.data(150, True)
-    
-    obj = writer.Writer('pytest.xlsx')
+class WriterTests:
 
-    data_obj =  [
-        list_data_1,
-        list_data_2,
-        list_data_3,
-        dataframe_data_1,
-        dataframe_data_2,
-        dataframe_data_3
-    ]
+    def write_method():
+        """Tests for the writer.Writer().write()"""
+        list_data_1 = utils.data(20)
+        list_data_2 = utils.data(35)
+        list_data_3 = utils.data(60)
+                
+        obj = writer.Writer('PyTest.xlsx')
 
-    for data_set in in data_objs:
-        obj.write('PyTestTab1', data_set)
+        data_obj =  [
+            list_data_1,
+            list_data_2,
+            list_data_3,
+        ]
 
-    obj.close
+        for data_set in data_objs:
+            obj.write('PyTestTab1', data_set)
 
-    return True
+        obj.close
 
-def raise_system_exit():
-    raise SystemExit(1)
+        return True
 
-def get_grid():
-    pass
-
-def test_mytest():
-    with pytest.raises(SystemExit):
-        raise_system_exit()
