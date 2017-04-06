@@ -7,6 +7,11 @@ import elizabeth
 import random  
 import pandas
 
+def get_operator():
+    """
+    """
+    pass
+
 def data(records=50, df=True):
     """Generate random data. This function will produce a pandas.core.Dataframe 
     object or a list of dict objects.

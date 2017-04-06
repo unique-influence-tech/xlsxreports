@@ -7,6 +7,7 @@ tab for further editing.
 import xlsxwriter
 import datetime 
 import pandas
+import numpy
 import pprint
 import copy
 
@@ -113,7 +114,7 @@ class Writer:
                 data_ = [list(obj[0].keys())]
                 for record in obj:
                     data_.append(list(record.values()))
-            elif isinstance(obj[0], list):
+            elif isinstance(obj[0], list) or isinstance(obj[0], numpy.ndarray):
                 data_ = obj
         else:
             raise TypeError("Data is not a DataFrame or list object.")

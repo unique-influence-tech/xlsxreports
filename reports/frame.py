@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 '''
 '''
-import pandas
+import datetime
+import pandas 
 import re
 
 class ReportFrame(pandas.core.frame.DataFrame):
@@ -13,9 +14,69 @@ class ReportFrame(pandas.core.frame.DataFrame):
         self._base = self.columns
         self._calculated = {}
 
+    def to_lists(self):
+        '''Parse data into list of list.'''
+        data_ = []
+        data_.extend([self.columns.values])
+        data_.extend(self.values)
+
+        return data_
+
     def totals(self):
-        ''''''
-        pass
+        '''Get max char length for each column.'''
+        temp = {}
+        store = {}
+        obj = self.to_lists()
+        calculated = self._calculated
+        headers = obj[0].tolist()
+        records = obj[1:]
+
+        for record in records: 
+            for index in range(len(record)):
+                key = temp.get(index)
+                if isinstance(record[index], str):
+                    continue
+                if isinstance(record[index], datetime.date):
+                    continue
+                if key:
+                    temp[index].append(record[index])     
+                else:
+                    temp.update({index:[record[index]]})
+        
+        for index in range(len(headers)):
+            name = calculated.get(headers[index])
+            if not name:
+                result = sum(temp[index]) if temp.get(index) else '-'
+            else:
+                ops = name.get('operators')
+                cols = name.get('columns')
+                result = None 
+                for index_ in range(len(ops)):
+                    col1 = headers.index(cols[index_])
+                    col2 = headers.index(cols[index_+1])
+                    if result:
+                        if ops[index_] == '-':
+                            result -= sum(temp[col2])
+                        if ops[index_] == '+':
+                            result += sum(temp[col2])
+                        if ops[index_] == '*':
+                            result *= sum(temp[col2])
+                        if ops[index_] == '/':
+                            result /= sum(temp[col2])
+                    else:
+                        if ops[index_] == '-': 
+                            result = sum(temp[col1]) - sum(temp[col2])
+                        if ops[index_] == '+': 
+                            result = sum(temp[col1]) - sum(temp[col2])
+                        if ops[index_] == '*': 
+                            result = sum(temp[col1]) * sum(temp[col2])
+                        if ops[index_] == '/': 
+                            result = sum(temp[col1]) / sum(temp[col2])
+            store[headers[index]] = {0: result}
+
+        self = pandas.concat([self, pandas.DataFrame(store)])
+    
+        return True
 
     def calculate(self, **kwargs):
         """Add a calculated field to DataFrame. Keep track of 
@@ -86,11 +147,11 @@ class ReportFrame(pandas.core.frame.DataFrame):
     # Representations
     def __repr__(self):
         return "<[{name} obj at {hex}]>".format(
-            name=self.__class__.name,
+            name=self.__class__.__name__,
             hex=hex(id(self)))
 
     def __str__(self):
-        return "<[{name} subclassed Pandas obj]>".format(name=self.__class__.name)
+        return "<[{name} subclassed Pandas obj]>".format(name=self.__class__.__name__)
 
 
 
