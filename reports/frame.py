@@ -14,70 +14,6 @@ class ReportFrame(pandas.core.frame.DataFrame):
         self._base = self.columns
         self._calculated = {}
 
-    def to_lists(self):
-        '''Parse data into list of list.'''
-        data_ = []
-        data_.extend([self.columns.values])
-        data_.extend(self.values)
-
-        return data_
-
-    def totals(self):
-        '''Get max char length for each column.'''
-        temp = {}
-        store = {}
-        obj = self.to_lists()
-        calculated = self._calculated
-        headers = obj[0].tolist()
-        records = obj[1:]
-
-        for record in records: 
-            for index in range(len(record)):
-                key = temp.get(index)
-                if isinstance(record[index], str):
-                    continue
-                if isinstance(record[index], datetime.date):
-                    continue
-                if key:
-                    temp[index].append(record[index])     
-                else:
-                    temp.update({index:[record[index]]})
-        
-        for index in range(len(headers)):
-            name = calculated.get(headers[index])
-            if not name:
-                result = sum(temp[index]) if temp.get(index) else '-'
-            else:
-                ops = name.get('operators')
-                cols = name.get('columns')
-                result = None 
-                for index_ in range(len(ops)):
-                    col1 = headers.index(cols[index_])
-                    col2 = headers.index(cols[index_+1])
-                    if result:
-                        if ops[index_] == '-':
-                            result -= sum(temp[col2])
-                        if ops[index_] == '+':
-                            result += sum(temp[col2])
-                        if ops[index_] == '*':
-                            result *= sum(temp[col2])
-                        if ops[index_] == '/':
-                            result /= sum(temp[col2])
-                    else:
-                        if ops[index_] == '-': 
-                            result = sum(temp[col1]) - sum(temp[col2])
-                        if ops[index_] == '+': 
-                            result = sum(temp[col1]) - sum(temp[col2])
-                        if ops[index_] == '*': 
-                            result = sum(temp[col1]) * sum(temp[col2])
-                        if ops[index_] == '/': 
-                            result = sum(temp[col1]) / sum(temp[col2])
-            store[headers[index]] = {0: result}
-
-        self = pandas.concat([self, pandas.DataFrame(store)])
-    
-        return True
-
     def calculate(self, **kwargs):
         """Add a calculated field to DataFrame. Keep track of 
         its operators and the columns used to calculate. 
@@ -134,6 +70,73 @@ class ReportFrame(pandas.core.frame.DataFrame):
             })
 
         return True
+
+    def totals(self):
+        '''Get max char length for each column.'''
+        temp = {}
+        store = {}
+        obj = self.__to_list()
+        calculated = self._calculated
+        headers = obj[0].tolist()
+        records = obj[1:]
+
+        for record in records: 
+            for index in range(len(record)):
+                key = temp.get(index)
+                if isinstance(record[index], str):
+                    continue
+                if isinstance(record[index], datetime.date):
+                    continue
+                if key:
+                    temp[index].append(record[index])     
+                else:
+                    temp.update({index:[record[index]]})
+        
+        for index in range(len(headers)):
+            name = calculated.get(headers[index])
+            if not name:
+                result = sum(temp[index]) if temp.get(index) else '-'
+            else:
+                ops = name.get('operators')
+                cols = name.get('columns')
+                result = None 
+                for index_ in range(len(ops)):
+                    col1 = headers.index(cols[index_])
+                    col2 = headers.index(cols[index_+1])
+                    if result:
+                        if ops[index_] == '-':
+                            result -= sum(temp[col2])
+                        if ops[index_] == '+':
+                            result += sum(temp[col2])
+                        if ops[index_] == '*':
+                            result *= sum(temp[col2])
+                        if ops[index_] == '/':
+                            result /= sum(temp[col2])
+                    else:
+                        if ops[index_] == '-': 
+                            result = sum(temp[col1]) - sum(temp[col2])
+                        if ops[index_] == '+': 
+                            result = sum(temp[col1]) - sum(temp[col2])
+                        if ops[index_] == '*': 
+                            result = sum(temp[col1]) * sum(temp[col2])
+                        if ops[index_] == '/': 
+                            result = sum(temp[col1]) / sum(temp[col2])
+
+            store[headers[index]] = {0: result}
+
+        return self.__init__(
+                self.append(pandas.DataFrame(store), 
+                ignore_index=True)
+                )
+
+    # Internal Methods
+    def __to_list(self):
+        '''Parse data into list of list.'''
+        data_ = []
+        data_.extend([self.columns.values])
+        data_.extend(self.values)
+    
+        return data_
             
     # Attributes 
     @property

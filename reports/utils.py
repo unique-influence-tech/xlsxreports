@@ -49,27 +49,6 @@ def data(records=50, df=True):
 
     return store
 
-def get_totals(self, obj):
-    '''Get max char length for each column.'''
-    store = {}
-    obj_ = obj[1:] # exclude header record 
-
-    for record in obj_: 
-        for index in range(len(record)):
-            key = store.get(index)
-            if isinstance(record[index], str):
-                continue
-            if isinstance(record[index], datetime.date):
-                continue
-            if key:
-                store[index].append(record[index])     
-            else:
-                store.update({index:[record[index]]})
-
-    store = {index : sum(store[index]) for index in store}
-
-    return store
-
 
 
 
