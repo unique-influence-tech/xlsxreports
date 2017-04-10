@@ -87,8 +87,8 @@ class ReportFrame(pandas.core.frame.DataFrame):
         
         # Convert object to list for easy summations
         obj = []
-        obj_.extend([self.columns.values])
-        obj_.extend(self.values)
+        obj.extend([self.columns.values])
+        obj.extend(self.values)
         headers = obj[0].tolist()
         records = obj[1:]
 

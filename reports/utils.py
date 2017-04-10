@@ -34,8 +34,6 @@ def data(records=50, df=True):
             store['COS'].append(random._cos(_))
             store['Date'].append(get.datetime.date())
             store['Money'].append(float(get.business.price().strip('$')))
-                     
-            store.append(keep_order)
             
     if isinstance(store, dict):
         store = pandas.DataFrame(store)
