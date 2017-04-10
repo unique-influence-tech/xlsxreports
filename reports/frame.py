@@ -42,7 +42,7 @@ class ReportFrame(pandas.core.frame.DataFrame):
         
         parse = match.group().split(' ')
 
-        # The user must enforce the rules of PEMDAS. 
+        # User must enforce the rules of PEMDAS.
         for index in range(0, len(parse), 2):
             if index == 0:
                 if parse[index+1] == '-':
@@ -72,11 +72,23 @@ class ReportFrame(pandas.core.frame.DataFrame):
         return True
 
     def totals(self):
-        '''Get max char length for each column.'''
+        ''' Sum rows that have numerical values and add the totals as
+        the last row of the data set. 
+
+        Args:
+            None
+
+        Refs:
+            None
+        '''
         temp = {}
         store = {}
-        obj = self.__to_list()
         calculated = self._calculated
+        
+        # Convert object to list for easy summations
+        obj = []
+        obj_.extend([self.columns.values])
+        obj_.extend(self.values)
         headers = obj[0].tolist()
         records = obj[1:]
 
@@ -128,15 +140,6 @@ class ReportFrame(pandas.core.frame.DataFrame):
                 self.append(pandas.DataFrame(store), 
                 ignore_index=True)
                 )
-
-    # Internal Methods
-    def __to_list(self):
-        '''Parse data into list of list.'''
-        data_ = []
-        data_.extend([self.columns.values])
-        data_.extend(self.values)
-    
-        return data_
             
     # Attributes 
     @property

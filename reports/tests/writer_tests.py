@@ -5,7 +5,7 @@
 import sys 
 import pytest
 import utils
-import writer
+import .writer
 
 class WriterTests:
 

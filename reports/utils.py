@@ -34,13 +34,6 @@ def data(records=50, df=True):
             store['COS'].append(random._cos(_))
             store['Date'].append(get.datetime.date())
             store['Money'].append(float(get.business.price().strip('$')))
-        else:
-            keep_order = collections.OrderedDict()
-            keep_order['COS'] = random._cos(_)
-            keep_order['Date'] = get.datetime.date(),
-            keep_order['IMEI'] = get.code.imei()
-            keep_order['Money'] = float(get.business.price().strip('$'))
-            keep_order['StackQ'] = get.development.stackoverflow_question()
                      
             store.append(keep_order)
             
