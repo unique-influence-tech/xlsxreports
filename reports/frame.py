@@ -8,11 +8,26 @@ import re
 class ReportFrame(pandas.core.frame.DataFrame):
     '''A subclassed DataFrame object to handle calculated rows and  
     totals internally. 
+
+    Args:
+        :totals: boolean, if the frame has a totals row 
+    
+    Refs:
+        (1) http://stackoverflow.com/questions/2215923/avoid-specifying-all-arguments-in-a-subclass
+
     '''
     def __init__(self, *args, **kwargs):
+        # (1)
+        if kwargs.get('totals', False):
+            totals = kwargs.pop('totals')
+        else:
+            totals = False
+
         super(ReportFrame, self).__init__(*args, **kwargs)
+
         self._base = self.columns
         self._calculated = {}
+        self._has_totals = totals
 
     def calculate(self, **kwargs):
         """Add a calculated field to DataFrame. Keep track of 
@@ -27,46 +42,41 @@ class ReportFrame(pandas.core.frame.DataFrame):
         """
         name = kwargs.get('name')
         phrase = kwargs.get('phrase')
-        base = "[a-zA-Z]+ [+-/*]{1,1} [a-zA-Z0-9]*"
-        addition = " [+-/*]{1,1} [a-zA-Z0-9]*"
-        compyle = re.compile(base)
-        match = compyle.match(phrase)
-        
-        if not match:
-            return False
-        
-        while match.group() != phrase:
-            base += addition
-            compyle = re.compile(base)
-            match = compyle.match(phrase)
-        
-        parse = match.group().split(' ')
 
+        base = "[\s][+-/*]{1,1}[\s]"
+        columns = re.split(base, phrase)    
+        operators = re.findall(base, phrase)
+        
+        assert(len(columns) > len(operators))
+        
+        for index in range(len(operators)):
+            columns.insert(index*2-1, operators[index].strip())
+        
         # User must enforce the rules of PEMDAS.
-        for index in range(0, len(parse), 2):
+        for index in range(0, len(columns), 2):
             if index == 0:
-                if parse[index+1] == '-':
-                    self[name] = self[parse[index]] - self[parse[index+2]]
-                if parse[index+1] == '+':
-                    self[name] = self[parse[index]] + self[parse[index+2]]
-                if parse[index+1] == '*':
-                    self[name] = self[parse[index]] * self[parse[index+2]]
-                if parse[index+1] == '/':
-                    self[name] = self[parse[index]] / self[parse[index+2]]
-            elif index < len(parse)-1:
-                if parse[index+1] == '-':
-                    self[name] -= self[parse[index+2]]
-                if parse[index+1] == '+':
-                    self[name] += self[parse[index+2]]
-                if parse[index+1] == '*':
-                    self[name] *= self[parse[index+2]]
-                if parse[index+1] == '/':
-                    self[name] /= self[parse[index+2]]
+                if columns[index+1] == '-':
+                    self[name] = self[columns[index]] - self[columns[index+2]]
+                if columns[index+1] == '+':
+                    self[name] = self[columns[index]] + self[columns[index+2]]
+                if columns[index+1] == '*':
+                    self[name] = self[columns[index]] * self[columns[index+2]]
+                if columns[index+1] == '/':
+                    self[name] = self[columns[index]] / self[columns[index+2]]
+            elif index < len(columns)-1:
+                if columns[index+1] == '-':
+                    self[name] -= self[columns[index+2]]
+                if columns[index+1] == '+':
+                    self[name] += self[columns[index+2]]
+                if columns[index+1] == '*':
+                    self[name] *= self[columns[index+2]]
+                if columns[index+1] == '/':
+                    self[name] /= self[columns[index+2]]
 
         self._calculated.update(
             {name:{
-                'operators':parse[1::2],
-                'columns':parse[::2]}
+                'operators':columns[1::2],
+                'columns':columns[::2]}
             })
 
         return True
@@ -90,7 +100,10 @@ class ReportFrame(pandas.core.frame.DataFrame):
         obj.extend([self.columns.values])
         obj.extend(self.values)
         headers = obj[0].tolist()
-        records = obj[1:]
+        records = obj[1:len(obj)-1]
+    
+        if self._has_totals:
+            records = records[:-1]
 
         for record in records: 
             for index in range(len(record)):
@@ -137,10 +150,9 @@ class ReportFrame(pandas.core.frame.DataFrame):
             store[headers[index]] = {0: result}
 
         return self.__init__(
-                self.append(pandas.DataFrame(store), 
-                ignore_index=True)
-                )
-            
+                data=self[:-1].append(pandas.DataFrame(store), ignore_index=True),
+                totals=True)
+
     # Attributes 
     @property
     def base(self):
