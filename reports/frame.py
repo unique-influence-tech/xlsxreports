@@ -22,9 +22,7 @@ class ReportFrame(pandas.core.frame.DataFrame):
             totals = kwargs.pop('totals')
         else:
             totals = False
-
         super(ReportFrame, self).__init__(*args, **kwargs)
-
         self._base = self.columns
         self._calculated = {}
         self._has_totals = totals

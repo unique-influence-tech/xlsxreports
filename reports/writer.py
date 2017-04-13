@@ -55,11 +55,23 @@ class Writer:
         Args:
             :sheet: str, name of sheet
             :obj: list or pandas.core.DataFrame.object, data to be written
+
+        Notes:
+             (write.1): Notice data[:-1] passed to .__get_format_map(). This is to avoid
+                including the totals row affecting the formatting. By summing values, float
+                decimal remainders extend out which causes currency value to be formatted as 
+                pure floats (without $)
         '''
+        try:
+            if not getattr(obj, '_has_totals'):
+                raise Warning("There's no totals row in this table.")
+        except AttributeError:
+            pass
+
         file_ = self._workbook
         format_ = self._formatter
         data = self.__parse(obj)
-
+        
         if sheet not in file_.sheetnames:
             file_.add_worksheet(sheet)
             sheet_ = file_.get_worksheet_by_name(sheet)
@@ -73,7 +85,7 @@ class Writer:
                 raise AttributeError('Kursor object doesn\'t exist.')
 
         vertices = self.__get_vertices(kursor, data)
-        format_map = self.__get_format_map(kursor, data)
+        format_map = self.__get_format_map(kursor, data[:-1]) # (write.1)
 
         # |---------- WRITE TO SHEET ----------|
         kursor.x = vertices['start_row']
@@ -131,7 +143,6 @@ class Writer:
         '''
         base = {}
         lengths = self.__get_lengths(obj)
-        #totals = self.__get_totals(obj)
         format_map = {'HEAD':'', 'BODY':'', 'FOOT':''}
 
         for index in range(len(obj[1])):
@@ -156,7 +167,7 @@ class Writer:
                 if key == 'BODY':
                     format_.update(format_.BODY)  
                 if key == 'FOOT':
-                    format_.update(format_.FOOT)  
+                    format_.update(format_.FOOT)
 
         return format_map
     
@@ -179,7 +190,7 @@ class Writer:
             for item in store:
                 max_ = max(store[item])
                 # currency float length runs small
-                min_ = min(store[item]) if min(store[item]) > 15 else 15
+                min_ = min(store[item])
                 store[item] = {'min': min_, 'max': max_}
 
         return store
