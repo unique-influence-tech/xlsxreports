@@ -1,24 +1,21 @@
 # -*- coding: utf-8 -*-
 '''
-Utility functions used in library. 
 '''
-import collections
 import elizabeth
 import random  
 import pandas
 
-def get_operator():
-    """
-    """
-    pass
 
-def data(records=50, df=True):
-    """Generate random data. This function will produce a pandas.core.Dataframe 
-    object or a list of dict objects.
+def get_dummy_data_set(records=50):
+    """ Generate a dummy data set that includes string, int, and float
+    data types. This returns a pandas.core.data.DataFram object.
 
     Args:
         :records: int, number of records to return 
         :df: bool, pandas.core.Dataframe object or list object
+
+    Refs:
+        None
     """
     get = elizabeth.Generic('en')
 

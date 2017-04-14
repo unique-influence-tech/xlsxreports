@@ -145,15 +145,17 @@ class Writer:
         lengths = self.__get_lengths(obj)
         format_map = {'HEAD':'', 'BODY':'', 'FOOT':''}
 
-        for index in range(len(obj[1])):
+        for index in range(len(obj[0])):
             formatter = FormatFactory()
             format_ = formatter.create(
+                column_name=obj[0][index],
                 value=obj[1][index],
-                max=lengths[index]['max'])
+                #max=lengths[index]['max']
+                )
             base.update({
                 index:{
                     'format':format_, 
-                    'lengths':lengths[index]
+                    'column':obj[0][index]
                     }
                 })
 

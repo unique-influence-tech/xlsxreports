@@ -17,9 +17,14 @@ class FormatFactory(dict):
             http://xlsxwriter.readthedocs.io/workbook.html#constructor
 
     Notes:
-        (!) Currency floats will be floats with 2 digits after decimal point. All other floats
-            will not have EXACTLY 2 digits after decimal point.
+        None
+  
     """
+    
+    _currency_ = ['value','revenue', 'spend', 'cost']
+    _percentage_ = ['tr', 'vr', 'rate', 'ratio', 'yield']
+
+
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         self.HEAD = {'bold': True,'font_size':'13', 'bottom':1}
@@ -43,6 +48,31 @@ class FormatFactory(dict):
             return u'\u00A5'+'#,##0.00'
 
     @classmethod
+    def find_float_format(cls, string):
+        """Float formats require context. See the class
+        properties _currency_ and _percentage_. 
+        """
+
+        for item in cls._currency_:
+            lower = item.lower()
+            upper = item.upper()
+            proper = item.title()
+
+            if lower in string or upper in string or proper in string:
+                currency = cls.localize_currency()
+                return cls(num_format=currency)
+
+        for item in cls._percentage_:
+            lower = item.lower()
+            upper = item.upper()
+            proper = item.title()
+
+            if lower in string or upper in string or proper in string:
+                return cls(num_format="#0.00%")
+        
+        return cls(num_format='#,##0.00')
+                
+    @classmethod
     def create(cls, **kwargs):
         """Generate a formatting dictionary.
 
@@ -52,24 +82,16 @@ class FormatFactory(dict):
         """
         value = kwargs.get('value')
         max_len = kwargs.get('max')
+        column = kwargs.get('column_name')
 
         if isinstance(value, str):
-            # TO DOs
             return cls(font_size='12')
 
         if isinstance(value, int):
             return cls(num_format='#,##0')
 
         if isinstance(value, float):
-            str_ = str(value).rsplit('.')
-            currency = cls.localize_currency()
-            if len(str_[1]) < 3 and float(str_[1]) != 0: # (!)
-                return cls(num_format=currency)
-            elif float(str_[1]) == 0:
-                    if max_len < 3:
-                        currency = currency.replace('#,##0.00', '#,##0')
-                        return cls(num_format=currency)
-            return cls(num_format='#,##0.00')
+            return cls.find_float_format(column)
 
         if isinstance(value, datetime.date): # (1)
             return cls(num_format='yyyy-mm-dd')
