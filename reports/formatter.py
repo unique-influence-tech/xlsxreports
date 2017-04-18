@@ -20,10 +20,8 @@ class FormatFactory(dict):
         None
   
     """
-    
-    _currency_ = ['value','revenue', 'spend', 'cost']
-    _percentage_ = ['tr', 'vr', 'rate', 'ratio', 'yield']
-
+    _currency_ = ['value','revenue', 'spend', 'cost', '$']
+    _percentage_ = ['tr', 'vr', 'rate', 'ratio', 'yield', "%"]
 
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
@@ -52,7 +50,6 @@ class FormatFactory(dict):
         """Float formats require context. See the class
         properties _currency_ and _percentage_. 
         """
-
         for item in cls._currency_:
             lower = item.lower()
             upper = item.upper()

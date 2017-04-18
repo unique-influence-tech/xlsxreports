@@ -142,7 +142,6 @@ class Writer:
             :formatter: formatter.FormatFactory obj
         '''
         base = {}
-        lengths = self.__get_lengths(obj)
         format_map = {'HEAD':'', 'BODY':'', 'FOOT':''}
 
         for index in range(len(obj[0])):
@@ -173,30 +172,6 @@ class Writer:
 
         return format_map
     
-    def __get_lengths(self, obj):
-        '''Get max char length for each column.'''
-        store = {}
-        obj_ = obj[1:] # exclude header record 
-
-        for record in obj_: 
-            for index in range(len(record)):
-                value = str(record[index])
-                key = store.get(index)
-                if isinstance(record[index], float):
-                    value = value.split('.')[1]
-                if key:
-                    store[index].append(len(value))
-                else:
-                    store.update({index:[len(value)]})
-        else:
-            for item in store:
-                max_ = max(store[item])
-                # currency float length runs small
-                min_ = min(store[item])
-                store[item] = {'min': min_, 'max': max_}
-
-        return store
-
     def __get_vertices(self, cursor, obj):
         ''' Generate table dimensions based on current
         position in sheet.

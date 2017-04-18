@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 '''
 '''
-import datetime
-import pandas 
+import pandas
+import numpy  
 import re
+import datetime
 
 class ReportFrame(pandas.core.frame.DataFrame):
     '''A subclassed DataFrame object to handle calculated rows and  
@@ -42,7 +43,7 @@ class ReportFrame(pandas.core.frame.DataFrame):
         phrase = kwargs.get('phrase')
 
         base = "[\s][+-/*]{1,1}[\s]"
-        columns = re.split(base, phrase)    
+        columns = re.split(base, phrase) 
         operators = re.findall(base, phrase)
         
         assert(len(columns) > len(operators))
@@ -71,6 +72,10 @@ class ReportFrame(pandas.core.frame.DataFrame):
                 if columns[index+1] == '/':
                     self[name] /= self[columns[index+2]]
 
+        # Replace `inf` values since these values cannot be written.
+        self.replace(numpy.inf, numpy.nan, inplace=True)
+        self.fillna(0, inplace=True)
+        
         self._calculated.update(
             {name:{
                 'operators':columns[1::2],
@@ -134,7 +139,10 @@ class ReportFrame(pandas.core.frame.DataFrame):
                         if ops[index_] == '*':
                             result *= sum(temp[col2])
                         if ops[index_] == '/':
-                            result /= sum(temp[col2])
+                            try:
+                                result /= sum(temp[col2])
+                            except ZeroDivisionError:
+                                result = 0
                     else:
                         if ops[index_] == '-': 
                             result = sum(temp[col1]) - sum(temp[col2])
@@ -143,7 +151,10 @@ class ReportFrame(pandas.core.frame.DataFrame):
                         if ops[index_] == '*': 
                             result = sum(temp[col1]) * sum(temp[col2])
                         if ops[index_] == '/': 
-                            result = sum(temp[col1]) / sum(temp[col2])
+                            try:
+                                result = sum(temp[col1]) / sum(temp[col2])
+                            except ZeroDivisionError:
+                                result = 0 
 
             store[headers[index]] = {0: result}
 
