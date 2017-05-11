@@ -1,22 +1,43 @@
-## XlsxReports
+## XlsxReports  :panda_face: :arrow_right: :bar_chart: :chart_with_upwards_trend:
 
-Create simple Excel reports from nested arrays or pandas DataFrame objects. 
+Create simple Excel reports from nested arrays or pandas DataFrame objects.
 
-## Features
+## Why? 🤔 💭 
 
-* Write multiple tabs
-* Write multiple tables per tab
-* Easily switch back and forth between tabs
+Excel is usually the accepted way to present data to non-tech savvy clients. Pandas is the one of the best libraries for performing data computations. When you combine these things, you have a nice way to create simple and flexible auomated Excel reports. 
+
+## Features :sparkles: :sparkles: :sparkles: 
+
+* Write individual DataFrame objects to worksheets
+* Write many DataFrame objects to each tab
+* Keep track of each tab and DataFrames on those tabs
+* Write conditional formatting to specific tables
+* Auto generate type formatting based on data types ()
 
 ## Getting Started 
 
 _Coming soon .._
 
-## Notes
+## Basic Usage 
 
-_Coming soon .._
+```python
+from reports import Writer, ReportFrame
+
+data = ReportFrame(pandas.core.data.Dataframe)
+data.totals() # Add totals row to dataframe
+
+writer = Writer("filename.xlsx", verbose=True)
+writer.write("sheet", data)
+writer.apply("sheet", "table 1", feature="conditional formatting", column="spend", type="data_bar")
+writer.close()
+```
 
 ## Testing 
 
-_Coming soon .._
+You can run the available tests by executing:
+
+```bash
+pytest -v -s --test_filename="/tmp/your_test_write_file.xlsx"
+```
+
 

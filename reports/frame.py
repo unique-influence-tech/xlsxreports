@@ -72,7 +72,7 @@ class ReportFrame(pandas.core.frame.DataFrame):
                 if columns[index+1] == '/':
                     self[name] /= self[columns[index+2]]
 
-        # Replace `inf` values since these values cannot be written.
+        # Replace `inf` values since these values cannot be written. 
         self.replace(numpy.inf, numpy.nan, inplace=True)
         self.fillna(0, inplace=True)
         
@@ -87,12 +87,6 @@ class ReportFrame(pandas.core.frame.DataFrame):
     def totals(self):
         ''' Sum rows that have numerical values and add the totals as
         the last row of the data set. 
-
-        Args:
-            None
-
-        Refs:
-            None
         '''
         temp = {}
         store = {}

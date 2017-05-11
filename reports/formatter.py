@@ -4,22 +4,23 @@ Provides the `<class 'reports.formatter.FormatFactory'>` class, a class that gen
 objects. 
 '''
 import datetime
+import json
 
 class FormatFactory(dict):
-    """A factory to create dictionaries with specific
-    formatting. 
-    
+    '''A collections object containing xlsx formatting.
+
     Args:
         None
 
     Refs:
         (1) Note necessary because of 
             http://xlsxwriter.readthedocs.io/workbook.html#constructor
-
-    Notes:
-        None
+            
+    Usage:
+        >> import FormatFactory
+        >> format = FormatFactory(locale='us')
   
-    """
+    '''
     _currency_ = ['value','revenue', 'spend', 'cost', '$']
     _percentage_ = ['tr', 'vr', 'rate', 'ratio', 'yield', "%"]
 
@@ -31,11 +32,11 @@ class FormatFactory(dict):
         
     @classmethod
     def localize_currency(cls, locale='us'):
-        """Simple currency formatting.
+        '''Simple currency formatting.
 
         Args:
-            :locale: str, abbreviated country name 
-        """
+            :locale: str, abbreviated country name
+        '''
         if locale == 'us':
             return '$#,##0.00'
         if locale == 'eu':
@@ -47,9 +48,9 @@ class FormatFactory(dict):
 
     @classmethod
     def find_float_format(cls, string):
-        """Float formats require context. See the class
+        '''Float formats require context. See the class
         properties _currency_ and _percentage_. 
-        """
+        '''
         for item in cls._currency_:
             lower = item.lower()
             upper = item.upper()
@@ -71,14 +72,13 @@ class FormatFactory(dict):
                 
     @classmethod
     def create(cls, **kwargs):
-        """Generate a formatting dictionary.
+        '''Generate a formatting dictionary.
 
         Args:
             :value: str/float/int/datetime.date, various values 
             :max: int, max length of similar value in column
-        """
+        '''
         value = kwargs.get('value')
-        max_len = kwargs.get('max')
         column = kwargs.get('column_name')
 
         if isinstance(value, str):
@@ -88,7 +88,7 @@ class FormatFactory(dict):
             return cls(num_format='#,##0')
 
         if isinstance(value, float):
-            return cls.find_float_format(column)
+            return cls.find_float_format(column) # floats can be currency or dollars
 
         if isinstance(value, datetime.date): # (1)
             return cls(num_format='yyyy-mm-dd')
@@ -97,15 +97,15 @@ class FormatFactory(dict):
     def __repr__(self):
         return '<[{name} object at loc = {mem}]>'.format(
             name=self.__class__.__name__,
-            mem=hex(id(self))
-        )
+            mem=hex(id(self)))
 
-    def __str__(self):
-        return '<[{name} object at loc = {mem}]>'.format(
-            name=self.__class__.__name__,
-            mem=hex(id(self))
-        )
+    def __str__(self):         
+        return json.dumps(self)
+    
 
+    
+        
+        
 
 
 

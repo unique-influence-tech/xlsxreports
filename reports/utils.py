@@ -5,7 +5,6 @@ import elizabeth
 import random  
 import pandas
 
-
 def get_dummy_data_set(records=50):
     """ Generate a dummy data set that includes string, int, and float
     data types. This returns a pandas.core.data.DataFram object.

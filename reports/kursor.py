@@ -8,6 +8,24 @@ import string
 class Kursor:
     """2D vector-like object to keep track of position
     in Excel files.
+
+    Args:
+        :x: int, start position of row in x-y plane
+        :y: int, start position of column in x-y plane
+    
+    Refs:
+        None
+
+    Usage:
+        >> import Kursor
+        >> kursor = Kursor(1,1)
+        >> kursor.position 
+        '[A1]'
+        >> kursor.coordinates
+        (1,1)
+        >> kursor.plus_row
+        >> kursor.position
+        '[A2]'
     """
     def __init__(self, x, y):
         self.x = x
@@ -49,10 +67,7 @@ class Kursor:
     # Properties
     @property
     def coordinates(self):
-        return (
-            getattr(self, 'x'),
-            getattr(self, 'y')
-            )
+        return (self.x, self.y)
 
     @property
     def position(self):
