@@ -24,7 +24,7 @@ _Coming soon .._
 from reports import Writer, ReportFrame
 
 data = ReportFrame(pandas.core.data.Dataframe) # create ReportFrame object
-data.totals() # add totals row to ReportFram object
+data.totals() # add totals row to ReportFrame object
 
 writer = Writer("filename.xlsx", verbose=True)
 writer.write("sheet", data)
