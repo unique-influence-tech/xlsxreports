@@ -23,8 +23,8 @@ _Coming soon .._
 ```python
 from reports import Writer, ReportFrame
 
-data = ReportFrame(pandas.core.data.Dataframe) # create ReportFrame 
-data.totals() # Add totals row to dataframe
+data = ReportFrame(pandas.core.data.Dataframe) # create ReportFrame object
+data.totals() # add totals row to ReportFram object
 
 writer = Writer("filename.xlsx", verbose=True)
 writer.write("sheet", data)
