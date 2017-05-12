@@ -4,7 +4,7 @@ Create simple Excel reports from nested arrays or pandas DataFrame objects.
 
 ## Why? 🤔 💭 
 
-Excel is usually the accepted way to present data to non-tech savvy clients. Pandas is the one of the best libraries for performing data computations. When you combine these things, you have a nice way to create simple and flexible automated Excel reports. 
+Excel is the accepted way to present data to clients. Pandas is the one of the best libraries for performing data computations. When you combine these things, you have a nice way to create simple and flexible automated Excel reports. 
 
 ## Features ✨ ✨ ✨
 
